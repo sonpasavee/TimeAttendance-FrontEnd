@@ -79,7 +79,7 @@ export default function Profile() {
         },
         { headers: { "Content-Type": "application/json" } }
       );
-      alert("✅ Profile updated!");
+      alert(" Profile updated!");
       setEditMode(false);
       // รีเฟรชจากเซิร์ฟเวอร์เพื่อให้ state ตรงกับ DB
       fetchProfile();
@@ -177,11 +177,13 @@ export default function Profile() {
 
               {!editMode ? (
                 <button
-                  className="btn btn-outline-primary rounded-pill px-4"
+                  className="btn rounded-pill px-4"
+                  style={{ backgroundColor: "#9b6bff", color: "white", border: "none" }}
                   onClick={() => setEditMode(true)}
                 >
                   Edit
                 </button>
+
               ) : (
                 <div className="d-flex gap-2">
                   <button
@@ -195,6 +197,7 @@ export default function Profile() {
                   </button>
                   <button
                     className="btn btn-primary rounded-pill px-4"
+                    style={{ backgroundColor: "#9b6bff", color: "white", border: "none" }}
                     onClick={updateProfile}
                     disabled={saving}
                   >
