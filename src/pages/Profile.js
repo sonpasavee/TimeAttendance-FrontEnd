@@ -17,6 +17,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const defaultAvatar = useMemo(
     () => "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
@@ -38,7 +39,6 @@ export default function Profile() {
 
   const fetchProfile = async () => {
     try {
-      // backend คืน User ทั้งก้อน พร้อม user.profile
       const res = await API.get("/user/profile");
       const u = res?.data || {};
       const p = u?.profile || {};
@@ -47,7 +47,6 @@ export default function Profile() {
         username: u.username ?? "",
         email: u.email ?? "",
         role: u.role ?? "",
-        // ดึงค่าจาก profile ซ้อน
         fullName: p.fullName ?? "",
         phoneNumber: p.phoneNumber ?? "",
         position: p.position ?? "",
@@ -64,24 +63,13 @@ export default function Profile() {
   const updateProfile = async () => {
     setSaving(true);
     try {
-      // Controller รับ JSON แบบแบนอยู่แล้ว
       await API.put(
         "/user/profile",
-        {
-          id: form.id,
-          username: form.username,
-          email: form.email,
-          role: form.role,
-          fullName: form.fullName,
-          phoneNumber: form.phoneNumber,
-          position: form.position,
-          profileImageUrl: form.profileImageUrl,
-        },
+        { ...form },
         { headers: { "Content-Type": "application/json" } }
       );
-      alert("✅ Profile updated!");
       setEditMode(false);
-      // รีเฟรชจากเซิร์ฟเวอร์เพื่อให้ state ตรงกับ DB
+      setShowModal(true);
       fetchProfile();
     } catch (err) {
       console.error(err);
@@ -98,6 +86,15 @@ export default function Profile() {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    if (showModal) {
+      const timer = setTimeout(() => {
+        setShowModal(false);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [showModal]);
 
   if (loading) {
     return (
@@ -121,7 +118,6 @@ export default function Profile() {
     >
       <Navbar />
 
-      {/* Top welcome bar */}
       <div className="container py-4 pb-4">
         <div className="mx-auto" style={{ maxWidth: 950 }}>
           <div className="d-flex align-items-center justify-content-between">
@@ -133,7 +129,6 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Main card */}
       <div className="container pb-5">
         <div
           className="card border-0 shadow-sm mx-auto"
@@ -194,12 +189,19 @@ export default function Profile() {
                     Cancel
                   </button>
                   <button
-                    className="btn btn-primary rounded-pill px-4"
+                    className="btn rounded-pill px-4"
                     onClick={updateProfile}
                     disabled={saving}
+                    style={{
+                      background: "linear-gradient(135deg, #d8b4ff, #fbcfe8)", 
+                      color: "#4b0082", 
+                      fontWeight: 600,
+                      border: "none",
+                    }}
                   >
                     {saving ? "Saving..." : "Save"}
                   </button>
+
                 </div>
               )}
             </div>
@@ -266,24 +268,56 @@ export default function Profile() {
                 />
               </div>
             </div>
-
-            {/* My email address block */}
-            <div className="mt-4">
-              <div className="fw-semibold mb-2">My email address</div>
-              <div className="d-flex align-items-center p-3 border rounded-3 bg-light">
-                <div className="me-auto">
-                  <div>{form.email}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* (ทางเลือก) อัปโหลดรูปโปรไฟล์ในอนาคต */}
-            {/* <div className="mt-3">
-              <input type="file" accept="image/*" disabled={!editMode} />
-            </div> */}
           </div>
         </div>
       </div>
+
+      {/* Modal */}
+      {showModal && (
+        <div
+          className="modal fade show d-block"
+          tabIndex="-1"
+          role="dialog"
+          style={{ backgroundColor: "transparent" }}
+        >
+          <div
+            className="modal-dialog modal-dialog-centered modal-sm"
+            role="document"
+            style={{ pointerEvents: "none" }}
+          >
+            <div
+              className="modal-content rounded-3 shadow-sm text-center px-3 py-2 animate__animated animate__fadeInDown"
+              style={{
+                display: "inline-block",
+                pointerEvents: "auto",
+                minWidth: "180px",
+                backgroundColor: "#ffffff",
+                fontSize: "0.9rem",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                style={{
+                  position: "absolute",
+                  top: 4,
+                  right: 6,
+                  border: "none",
+                  background: "transparent",
+                  fontSize: "1rem",
+                  cursor: "pointer",
+                }}
+              >
+                ×
+              </button>
+              <div className="modal-body d-flex align-items-center justify-content-center gap-2 py-2">
+                <span style={{ fontSize: "1.2rem" }}>✅</span>
+                <span className="fw-semibold">Profile Updated</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
