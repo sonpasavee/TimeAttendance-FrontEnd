@@ -76,7 +76,9 @@ export default function UserDashboard() {
         <div
           className="py-5 text-center text-white mb-4 mx-3"
           style={{
-            background: "linear-gradient(to right, #6a11cb, #a593e6)",
+            backgroundImage: "url('/banner2.png')", // ใช้ banner2.png จาก public
+            backgroundSize: "cover",       // ทำให้ภาพเต็มพื้นที่
+            backgroundPosition: "center",  // จัดภาพตรงกลาง
             borderRadius: "1rem",
             boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
             minHeight: "150px",
@@ -88,6 +90,7 @@ export default function UserDashboard() {
           <h4>{formatCurrentTime(currentTime)}</h4>
         </div>
       )}
+
 
       <div className="container py-4">
         {/* ตารางข้อมูล */}
@@ -104,18 +107,28 @@ export default function UserDashboard() {
 
             <div className="d-flex gap-2">
               <button
-                className="btn btn-success btn-sm fw-semibold shadow-sm"
+                className="btn btn-sm fw-semibold shadow-sm"
                 onClick={clockIn}
                 disabled={loading}
+                style={{
+                  backgroundColor: "#6a11cb", // ม่วงเข้ม
+                  color: "white",             // ตัวอักษรสีขาว
+                  border: "none"
+                }}
               >
-                 Clock In
+                Clock In
               </button>
               <button
-                className="btn btn-danger btn-sm fw-semibold shadow-sm"
+                className="btn btn-sm fw-semibold shadow-sm"
                 onClick={clockOut}
                 disabled={loading}
+                style={{
+                  backgroundColor: "white",  // สีขาว
+                  color: "#6a11cb",          // ตัวอักษรสีม่วง
+                  border: "1px solid #6a11cb"
+                }}
               >
-                 Clock Out
+                Clock Out
               </button>
             </div>
           </div>

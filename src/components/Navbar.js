@@ -17,12 +17,25 @@ export default function Navbar() {
   return (
     <nav
       className="navbar navbar-expand-lg navbar-dark"
-      style={{ background: "linear-gradient(to right, #6a11cb, #a593e6)" }}
+      style={{
+        background: "linear-gradient(to right, #a593e6, #6a11cb)",
+        padding: "0.5rem 1rem",
+      }}
     >
-      <div className="container">
-        <span className="navbar-brand fw-semibold">
+      <div className="container-fluid">
+        <Link
+          to={role === "ADMIN" ? "/admin/dashboard" : "/user/dashboard"}
+          className="navbar-brand fw-semibold d-flex align-items-center text-white text-decoration-none gap-2"
+        >
+          <img
+            src="/logo Attenda2.png"
+            alt="Logo"
+            width="30"
+            height="30"
+            className="d-inline-block align-text-top rounded-circle shadow-sm"
+          />
           ATTENDA {role === "ADMIN" ? "(Admin)" : ""}
-        </span>
+        </Link>
 
         <div className="collapse navbar-collapse justify-content-end">
           <ul className="navbar-nav align-items-center gap-2">
