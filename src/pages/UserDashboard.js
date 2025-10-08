@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from "react";
 import API from "../api/api";
 import Navbar from "../components/Navbar";
-import { Link } from "react-router-dom";
 
 export default function UserDashboard() {
   const [attendance, setAttendance] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   const fetchAttendance = async () => {
     const res = await API.get("/attendance/my");
     setAttendance(res.data);
   };
 
-  // ฟังก์ชัน Clock In → ใช้ Geolocation
   const clockIn = async () => {
     if (!navigator.geolocation) {
       alert("Geolocation is not supported by your browser");
@@ -21,7 +20,7 @@ export default function UserDashboard() {
 
     navigator.geolocation.getCurrentPosition(async (position) => {
       const location = `${position.coords.latitude},${position.coords.longitude}`;
-      const method = "GPS"; // ถ้าใช้ GPS
+      const method = "GPS";
       try {
         setLoading(true);
         await API.post("/attendance/clockin", { method, location });
@@ -35,7 +34,6 @@ export default function UserDashboard() {
     });
   };
 
-  // Clock Out
   const clockOut = async () => {
     try {
       setLoading(true);
@@ -51,35 +49,92 @@ export default function UserDashboard() {
 
   useEffect(() => {
     fetchAttendance();
+
+    // อัปเดตเวลาปัจจุบันทุกวินาที
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, []);
 
-  // แปลงวันที่ + เวลาให้สวย
   const formatDateTime = (dt) => {
     if (!dt) return "-";
     return new Date(dt).toLocaleString();
   };
 
+  const formatCurrentTime = (dt) => {
+    return dt.toLocaleTimeString(); // เวลา HH:MM:SS
+  };
+
   return (
-    <div>
+    <div style={{ minHeight: "100vh" }}>
       <Navbar />
-      <div className="container py-5">
-        <h2 className="mb-4">User Dashboard</h2>
 
-        <div className="mb-4 d-flex gap-2 flex-wrap">
-          <button className="btn btn-success" onClick={clockIn} disabled={loading}>
-            Clock In
-          </button>
-          <button className="btn btn-danger" onClick={clockOut} disabled={loading}>
-            Clock Out
-          </button>
-          <Link to="/leave" className="btn btn-primary">Leave Request</Link>
-          <Link to="/profile" className="btn btn-secondary">Profile</Link>
+      {/* แบนเนอร์ */}
+      {localStorage.getItem("role") === "USER" && (
+        <div
+          className="py-5 text-center text-white mb-4 mx-3"
+          style={{
+            backgroundImage: "url('/banner2.png')", // ใช้ banner2.png จาก public
+            backgroundSize: "cover",       // ทำให้ภาพเต็มพื้นที่
+            backgroundPosition: "center",  // จัดภาพตรงกลาง
+            borderRadius: "1rem",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            minHeight: "150px",
+            marginTop: "40px"
+          }}
+        >
+          <h1 className="fw-bold">Welcome to Your Attendance Dashboard</h1>
+          <p className="lead">Check your attendance and manage your work time easily</p>
+          <h4>{formatCurrentTime(currentTime)}</h4>
         </div>
+      )}
 
-        <div className="card">
-          <div className="card-header bg-primary text-white">Attendance History</div>
+
+      <div className="container py-4">
+        {/* ตารางข้อมูล */}
+        <div className="card shadow-sm border-0" style={{ borderRadius: "1rem" }}>
+          <div
+            className="card-header d-flex justify-content-between align-items-center text-white fw-semibold"
+            style={{
+              background: "linear-gradient(to right, #a593e6, #ffb6c1)",
+              borderTopLeftRadius: "1rem",
+              borderTopRightRadius: "1rem",
+            }}
+          >
+            <span>Attendance History</span>
+
+            <div className="d-flex gap-2">
+              <button
+                className="btn btn-sm fw-semibold shadow-sm"
+                onClick={clockIn}
+                disabled={loading}
+                style={{
+                  backgroundColor: "#6a11cb", // ม่วงเข้ม
+                  color: "white",             // ตัวอักษรสีขาว
+                  border: "none"
+                }}
+              >
+                Clock In
+              </button>
+              <button
+                className="btn btn-sm fw-semibold shadow-sm"
+                onClick={clockOut}
+                disabled={loading}
+                style={{
+                  backgroundColor: "white",  // สีขาว
+                  color: "#6a11cb",          // ตัวอักษรสีม่วง
+                  border: "1px solid #6a11cb"
+                }}
+              >
+                Clock Out
+              </button>
+            </div>
+          </div>
+
           <div className="card-body p-0">
-            <table className="table mb-0">
+            <table className="table table-hover mb-0 text-center align-middle">
               <thead className="table-light">
                 <tr>
                   <th>Date</th>
@@ -104,7 +159,9 @@ export default function UserDashboard() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="text-center">No attendance records</td>
+                    <td colSpan="6" className="text-center py-4 text-muted">
+                      No attendance records
+                    </td>
                   </tr>
                 )}
               </tbody>
