@@ -64,32 +64,54 @@ export default function UserDashboard() {
   };
 
   const formatCurrentTime = (dt) => {
-    return dt.toLocaleTimeString(); // เวลา HH:MM:SS
+    return dt.toLocaleTimeString(); 
   };
 
   return (
     <div style={{ minHeight: "100vh" }}>
       <Navbar />
 
-      {/* แบนเนอร์ */}
-      {localStorage.getItem("role") === "USER" && (
-        <div
-          className="py-5 text-center text-white mb-4 mx-3"
-          style={{
-            backgroundImage: "url('/banner2.png')", // ใช้ banner2.png จาก public
-            backgroundSize: "cover",       // ทำให้ภาพเต็มพื้นที่
-            backgroundPosition: "center",  // จัดภาพตรงกลาง
-            borderRadius: "1rem",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-            minHeight: "150px",
-            marginTop: "40px"
-          }}
-        >
-          <h1 className="fw-bold">Welcome to Your Attendance Dashboard</h1>
-          <p className="lead">Check your attendance and manage your work time easily</p>
-          <h4>{formatCurrentTime(currentTime)}</h4>
-        </div>
-      )}
+    {/* แบนเนอร์ */}
+{localStorage.getItem("role") === "USER" && (
+  <div
+    className="py-5 text-center text-white mb-4 mx-3 d-flex flex-column align-items-center justify-content-center"
+    style={{
+      backgroundImage: "url('/banner2.png')", 
+      backgroundSize: "cover",       
+      backgroundPosition: "center", 
+      borderRadius: "1rem",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+      minHeight: "180px",
+      marginTop: "40px"
+    }}
+  >
+    <h1 className="fw-bold">Welcome to Your Attendance Dashboard</h1>
+    <p className="lead">Check your attendance and manage your work time </p>
+    <h2>{formatCurrentTime(currentTime)}</h2>
+
+    {/* Clock In / Clock Out Buttons */}
+    <div className="d-flex gap-3 mt-3">
+      <button
+        className="btn rounded-pill px-4 py-2 fw-semibold"
+        style={{ backgroundColor: "#9b6bff", color: "white", border: "none" }}
+        onClick={clockIn}
+        disabled={loading}
+      >
+        Clock In
+      </button>
+      <button
+        className="btn rounded-pill px-4 py-2 fw-semibold"
+        style={{    backgroundColor: "white",  
+                  color: "#6a11cb",  }}
+        onClick={clockOut}
+        disabled={loading}
+      >
+        Clock Out
+      </button>
+    </div>
+  </div>
+)}
+
 
 
       <div className="container py-4">
@@ -105,32 +127,7 @@ export default function UserDashboard() {
           >
             <span>Attendance History</span>
 
-            <div className="d-flex gap-2">
-              <button
-                className="btn btn-sm fw-semibold shadow-sm"
-                onClick={clockIn}
-                disabled={loading}
-                style={{
-                  backgroundColor: "#6a11cb", // ม่วงเข้ม
-                  color: "white",             // ตัวอักษรสีขาว
-                  border: "none"
-                }}
-              >
-                Clock In
-              </button>
-              <button
-                className="btn btn-sm fw-semibold shadow-sm"
-                onClick={clockOut}
-                disabled={loading}
-                style={{
-                  backgroundColor: "white",  // สีขาว
-                  color: "#6a11cb",          // ตัวอักษรสีม่วง
-                  border: "1px solid #6a11cb"
-                }}
-              >
-                Clock Out
-              </button>
-            </div>
+          
           </div>
 
           <div className="card-body p-0">

@@ -34,7 +34,7 @@ export default function Navbar() {
             height="30"
             className="d-inline-block align-text-top rounded-circle shadow-sm"
           />
-          ATTENDA {role === "ADMIN" ? "(Admin)" : ""}
+          ATTENDA {role === "ADMIN" ? "ADMIN" : ""}
         </Link>
 
         <div className="collapse navbar-collapse justify-content-end">

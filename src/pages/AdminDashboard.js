@@ -1,21 +1,33 @@
 import React, { useEffect, useState } from "react";
 import API from "../api/api";
 import Navbar from "../components/Navbar";
+import { FaUserAlt, FaRegClock, FaUserCheck, FaCalendarCheck, FaBan } from "react-icons/fa";
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [leaves, setLeaves] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [editingUser, setEditingUser] = useState(null);
+  const [userFilter, setUserFilter] = useState("ALL");
 
-  // โหลดข้อมูลตอน mount
+
+  const normalUsers = users.filter((u) => u.role && u.role.toLowerCase() !== "admin");
+  const totalNormalUsers = normalUsers.length;
+
+  const summary = {
+    totalClockIn: attendance.filter((a) => a.clockIn).length,
+    totalClockOut: attendance.filter((a) => a.clockOut).length,
+    totalLeave: attendance.filter((a) => a.status === "Leave").length,
+  };
+
+  const rejectedCount = leaves.filter((l) => l.status === "Rejected").length;
+
   useEffect(() => {
     fetchUsers();
     fetchLeaves();
     fetchAttendance();
   }, []);
 
-  // ดึง user ทั้งหมด
   const fetchUsers = async () => {
     try {
       const res = await API.get("/admin/users");
@@ -26,7 +38,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // ดึง leave requests ที่รอดำเนินการ
   const fetchLeaves = async () => {
     try {
       const res = await API.get("/admin/leave/pending");
@@ -37,10 +48,9 @@ export default function AdminDashboard() {
     }
   };
 
-  // ดึง attendance ของทุกคน
   const fetchAttendance = async () => {
     try {
-      const res = await API.get("/admin/attendance/all"); // ต้องสร้าง endpoint ใน backend
+      const res = await API.get("/admin/attendance/all");
       setAttendance(res.data);
     } catch (err) {
       console.error(err);
@@ -48,7 +58,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // Approve leave
   const approve = async (id) => {
     try {
       await API.put(`/admin/leave/${id}/approve`);
@@ -59,7 +68,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // Reject leave
   const reject = async (id) => {
     try {
       await API.put(`/admin/leave/${id}/reject`);
@@ -70,15 +78,10 @@ export default function AdminDashboard() {
     }
   };
 
-  // เริ่มแก้ไข username
-  const startEdit = (user) => {
-    setEditingUser({ ...user });
-  };
+  const startEdit = (user) => setEditingUser({ ...user });
 
-  // บันทึก username
   const saveEdit = async () => {
     if (!editingUser || !editingUser.username.trim()) return;
-
     try {
       await API.put(`/admin/users/${editingUser.id}`, { username: editingUser.username });
       setEditingUser(null);
@@ -90,10 +93,8 @@ export default function AdminDashboard() {
     }
   };
 
-  // ลบ user
   const deleteUser = async (id) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
-
     try {
       await API.delete(`/admin/users/${id}`);
       fetchUsers();
@@ -104,43 +105,66 @@ export default function AdminDashboard() {
     }
   };
 
-  // แปลงวันที่
   const formatDate = (dateValue) => {
     if (!dateValue) return "-";
     const d = new Date(dateValue);
     return isNaN(d.getTime()) ? "-" : d.toLocaleDateString();
   };
 
-  // แปลงเวลาสำหรับแสดง
   const formatDateTime = (dateValue) => {
     if (!dateValue) return "-";
     const d = new Date(dateValue);
     return isNaN(d.getTime()) ? "-" : d.toLocaleString();
   };
 
+  const filteredUsers = users.filter((u) => (userFilter === "ALL" ? true : u.role === userFilter));
+
   return (
     <div>
       <Navbar />
       <div className="container py-5">
-        <h2 className="mb-4">Admin Dashboard</h2>
+        {/* Summary Cards */}
+        <div className="d-flex justify-content-center mb-5 flex-wrap gap-4">
+          {[
+            { title: "Total Users", value: totalNormalUsers, icon: <FaUserAlt /> },
+            { title: "Clock In", value: summary.totalClockIn, icon: <FaRegClock /> },
+            { title: "Clock Out", value: summary.totalClockOut, icon: <FaUserCheck /> },
+            { title: "Leave", value: summary.totalLeave, icon: <FaCalendarCheck /> },
+            { title: "Rejected Leave", value: rejectedCount, icon: <FaBan /> },
+          ].map((card, i) => (
+            <div
+              key={i}
+              className="card text-center shadow border-0 text-white"
+              style={{ background: "linear-gradient(to bottom, #9b6bff, #a593e6)", width: "200px", borderRadius: "1rem" }}
+            >
+              <div className="card-body">
+                <div className="fs-2 mb-2">{card.icon}</div>
+                <h6>{card.title}</h6>
+                <h3 className="fw-bold">{card.value}</h3>
+              </div>
+            </div>
+          ))}
+        </div>
 
         {/* Pending Leave Requests */}
-        <div className="card mb-5">
-          <div className="card-header bg-primary text-white">Pending Leave Requests</div>
+        <div className="card shadow-lg mb-5 border-0">
+          <div className="card-header text-white fw-bold" style={{ background: "linear-gradient(to right,#a593e6, #ffb6c1)" }}>
+            Pending Leave Requests
+          </div>
           <div className="card-body p-0">
-            <table className="table mb-0">
-              <thead className="table-light">
+            <table className="table table-hover align-middle mb-0">
+              <thead className="table-light text-center">
                 <tr>
                   <th>User</th>
                   <th>Reason</th>
-                  <th>Start Date</th>
-                  <th>End Date</th>
-                  <th>Created At</th>
-                  <th>Action</th>
+                  <th>Start</th>
+                  <th>End</th>
+                  <th>Requested At</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                {leaves.length > 0 ? (
+              <tbody className="text-center">
+                {leaves.length ? (
                   leaves.map((l) => (
                     <tr key={l.id}>
                       <td>{l.username}</td>
@@ -149,14 +173,20 @@ export default function AdminDashboard() {
                       <td>{formatDate(l.endDate)}</td>
                       <td>{formatDateTime(l.createdAt)}</td>
                       <td>
-                        <button className="btn btn-success btn-sm me-2" onClick={() => approve(l.id)}>Approve</button>
-                        <button className="btn btn-danger btn-sm" onClick={() => reject(l.id)}>Reject</button>
+                        <button className="btn btn-success btn-sm me-2" onClick={() => approve(l.id)}>
+                          Approve
+                        </button>
+                        <button className="btn btn-danger btn-sm" onClick={() => reject(l.id)}>
+                          Reject
+                        </button>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="text-center">No pending requests</td>
+                    <td colSpan="6" className="py-3 text-muted">
+                      No pending requests
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -164,42 +194,77 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* All Users */}
-        <div className="card mb-5">
-          <div className="card-header bg-secondary text-white">All Users</div>
-          <ul className="list-group list-group-flush">
-            {users.length > 0 ? (
-              users.map((u) => (
-                <li key={u.id} className="list-group-item d-flex justify-content-between align-items-center">
-                  {editingUser?.id === u.id ? (
-                    <input
-                      className="form-control me-2"
-                      value={editingUser.username}
-                      onChange={(e) => setEditingUser({ ...editingUser, username: e.target.value })}
-                    />
-                  ) : (
-                    <span>{u.username} ({u.role})</span>
-                  )}
-
-                  <div>
-                    {editingUser?.id === u.id ? (
-                      <button className="btn btn-sm btn-success me-2" onClick={saveEdit} disabled={!editingUser.username.trim()}>Save</button>
-                    ) : (
-                      <button className="btn btn-sm btn-primary me-2" onClick={() => startEdit(u)}>Edit</button>
-                    )}
-                    <button className="btn btn-sm btn-danger" onClick={() => deleteUser(u.id)}>Delete</button>
-                  </div>
-                </li>
-              ))
-            ) : (
-              <li className="list-group-item text-center">No users found</li>
-            )}
-          </ul>
+        {/* Filter by Role */}
+        <div className="mb-3 d-flex align-items-center gap-2">
+          <span>Filter by role:</span>
+          <select className="form-select w-auto" value={userFilter} onChange={(e) => setUserFilter(e.target.value)}>
+            <option value="ALL">All</option>
+            <option value="USER">User</option>
+            <option value="ADMIN">Admin</option>
+          </select>
         </div>
 
-        {/* All Attendance Records */}
-        <div className="card">
-          <div className="card-header bg-info text-white">Attendance Records</div>
+        {/* All Users */}
+        <div className="card mb-5 shadow-lg">
+          <div className="card-header text-white" style={{ background: "linear-gradient(to right,#a593e6, #ffb6c1)" }}>
+            All Users
+          </div>
+          <div className="card-body p-0">
+            <table className="table mb-0 align-middle">
+              <tbody>
+                {filteredUsers.length > 0 ? (
+                  filteredUsers.map((u) => (
+                    <tr key={u.id} style={{ backgroundColor: u.role === "USER" ? "#e0f7fa" : "#d4edda" }}>
+                      <td className="d-flex align-items-center justify-content-between">
+                        <div style={{ flex: 1, textAlign: "left" }}>
+                          {editingUser?.id === u.id ? (
+                            <input
+                              className="form-control"
+                              value={editingUser.username}
+                              onChange={(e) => setEditingUser({ ...editingUser, username: e.target.value })}
+                            />
+                          ) : (
+                            u.username
+                          )}
+                        </div>
+                        <div style={{ flex: 1, textAlign: "center", color: u.role === "ADMIN" ? "#00bcd4" : "#28a745" }}>
+                          {u.role}
+                        </div>
+                        <div style={{ flex: 1, textAlign: "right" }}>
+                          {editingUser?.id === u.id ? (
+                            <button className="btn btn-sm btn-success me-2" onClick={saveEdit} disabled={!editingUser.username.trim()}>
+                              Save
+                            </button>
+                          ) : (
+                            <button className="btn btn-sm btn-light me-2" onClick={() => startEdit(u)}>
+                              Edit
+                            </button>
+                          )}
+                          <button className="btn btn-sm btn-danger" onClick={() => deleteUser(u.id)}>
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td className="text-center">No users found</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Attendance Records */}
+        <div className="card mb-5 shadow-lg">
+          <div
+            className="card-header text-white"
+            style={{ background: "linear-gradient(to right,#a593e6, #ffb6c1)" }}
+          >
+            Attendance Records
+          </div>
           <div className="card-body p-0">
             <table className="table mb-0">
               <thead className="table-light">
@@ -221,14 +286,18 @@ export default function AdminDashboard() {
                       <td>{formatDate(a.date)}</td>
                       <td>{formatDateTime(a.clockIn)}</td>
                       <td>{formatDateTime(a.clockOut)}</td>
-                      <td>{a.status}</td>
+                      <td style={{ color: a.status.toLowerCase() === "late" ? "red" : "inherit" }}>
+                        {a.status}
+                      </td>
                       <td>{a.method}</td>
                       <td>{a.location}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="7" className="text-center">No attendance records</td>
+                    <td colSpan="7" className="text-center">
+                      No attendance records
+                    </td>
                   </tr>
                 )}
               </tbody>
