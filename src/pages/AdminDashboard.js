@@ -9,6 +9,8 @@ export default function AdminDashboard() {
   const [attendance, setAttendance] = useState([]);
   const [editingUser, setEditingUser] = useState(null);
   const [userFilter, setUserFilter] = useState("ALL");
+  const [dailyApprovedCount, setDailyApprovedCount] = useState(0);
+
 
 
   const normalUsers = users.filter((u) => u.role && u.role.toLowerCase() !== "admin");
@@ -20,13 +22,27 @@ export default function AdminDashboard() {
     totalLeave: attendance.filter((a) => a.status === "Leave").length,
   };
 
-  const rejectedCount = leaves.filter((l) => l.status === "Rejected").length;
+  const lateCount = attendance.filter((a) => a.status && a.status.toLowerCase() === "late").length;
 
   useEffect(() => {
     fetchUsers();
     fetchLeaves();
     fetchAttendance();
   }, []);
+
+  useEffect(() => {
+  const today = new Date().toLocaleDateString();
+  const savedDate = localStorage.getItem("approvedDate");
+
+  if (savedDate !== today) {
+    setDailyApprovedCount(0);
+    localStorage.setItem("approvedDate", today);
+  } else {
+    const savedCount = parseInt(localStorage.getItem("approvedCount") || "0", 10);
+    setDailyApprovedCount(savedCount);
+  }
+}, []);
+
 
   const fetchUsers = async () => {
     try {
@@ -58,25 +74,36 @@ export default function AdminDashboard() {
     }
   };
 
-  const approve = async (id) => {
-    try {
-      await API.put(`/admin/leave/${id}/approve`);
-      fetchLeaves();
-    } catch (err) {
-      console.error(err);
-      alert("Failed to approve leave");
-    }
-  };
+const approve = async (id) => {
+  try {
+    await API.put(`/admin/leave/${id}/approve`);
+    fetchLeaves();
+    fetchAttendance();
 
-  const reject = async (id) => {
-    try {
-      await API.put(`/admin/leave/${id}/reject`);
-      fetchLeaves();
-    } catch (err) {
-      console.error(err);
-      alert("Failed to reject leave");
-    }
-  };
+    // เพิ่มจำนวนอนุมัติวันนี้ +1
+    setDailyApprovedCount((prev) => {
+      const newCount = prev + 1;
+      localStorage.setItem("approvedCount", newCount);
+      return newCount;
+    });
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to approve leave");
+  }
+};
+
+
+const reject = async (id) => {
+  try {
+    await API.put(`/admin/leave/${id}/reject`);
+    fetchLeaves();
+    fetchAttendance(); 
+  } catch (err) {
+    console.error(err);
+    alert("Failed to reject leave");
+  }
+};
 
   const startEdit = (user) => setEditingUser({ ...user });
 
@@ -128,14 +155,14 @@ export default function AdminDashboard() {
           {[
             { title: "Total Users", value: totalNormalUsers, icon: <FaUserAlt /> },
             { title: "Clock In", value: summary.totalClockIn, icon: <FaRegClock /> },
+                    { title: "Late", value: lateCount, icon: <FaRegClock /> },
             { title: "Clock Out", value: summary.totalClockOut, icon: <FaUserCheck /> },
-            { title: "Leave", value: summary.totalLeave, icon: <FaCalendarCheck /> },
-            { title: "Rejected Leave", value: rejectedCount, icon: <FaBan /> },
+           { title: "Approved Leave Today", value: dailyApprovedCount, icon: <FaUserCheck /> },
           ].map((card, i) => (
             <div
               key={i}
               className="card text-center shadow border-0 text-white"
-              style={{ background: "linear-gradient(to bottom, #9b6bff, #a593e6)", width: "200px", borderRadius: "1rem" }}
+              style={{ background: "linear-gradient(to bottom, #a780f9ff, #b4a6e7ff)", width: "200px", borderRadius: "1rem" }}
             >
               <div className="card-body">
                 <div className="fs-2 mb-2">{card.icon}</div>
@@ -148,7 +175,7 @@ export default function AdminDashboard() {
 
         {/* Pending Leave Requests */}
         <div className="card shadow-lg mb-5 border-0">
-          <div className="card-header text-white fw-bold" style={{ background: "linear-gradient(to right,#a593e6, #ffb6c1)" }}>
+          <div className="card-header text-white fw-bold" style={{ background:  "linear-gradient(to right,#a593e6, #e2cbf3ff)"  }}>
             Pending Leave Requests
           </div>
           <div className="card-body p-0">
@@ -261,7 +288,7 @@ export default function AdminDashboard() {
         <div className="card mb-5 shadow-lg">
           <div
             className="card-header text-white"
-            style={{ background: "linear-gradient(to right,#a593e6, #ffb6c1)" }}
+            style={{ background: "linear-gradient(to right,#a593e6, #e2cbf3ff)" }}
           >
             Attendance Records
           </div>
