@@ -6,10 +6,15 @@ export default function UserDashboard() {
   const [attendance, setAttendance] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [hasClockedIn, setHasClockedIn] = useState(false);
 
   const fetchAttendance = async () => {
     const res = await API.get("/attendance/my");
     setAttendance(res.data);
+
+    const today = new Date().toISOString().split("T")[0];
+    const todayRecord = res.data.find((record) => record.date === today);
+    setHasClockedIn(todayRecord?.clockIn ? true : false);
   };
 
   const clockIn = async () => {
@@ -49,70 +54,71 @@ export default function UserDashboard() {
 
   useEffect(() => {
     fetchAttendance();
-
-    // อัปเดตเวลาปัจจุบันทุกวินาที
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const formatDateTime = (dt) => {
-    if (!dt) return "-";
-    return new Date(dt).toLocaleString();
-  };
+  const formatDateTime = (dt) => (!dt ? "-" : new Date(dt).toLocaleString());
+  const formatCurrentTime = (dt) => dt.toLocaleTimeString();
 
-  const formatCurrentTime = (dt) => {
-    return dt.toLocaleTimeString(); 
+  // ฟังก์ชันเลือกสีตามสถานะ
+  const getStatusBadge = (status) => {
+    const baseStyle = "px-2 py-1 rounded-pill fw-semibold";
+    switch (status.toLowerCase()) {
+      case "on time":
+        return <span className={`${baseStyle}`} style={{ backgroundColor: "#28a745", color: "white" }}>On Time</span>;
+      case "late":
+        return <span className={`${baseStyle}`} style={{ backgroundColor: "#dc3545", color: "white" }}>Late</span>;
+      case "absent":
+        return <span className={`${baseStyle}`} style={{ backgroundColor: "#6c757d", color: "white" }}>Absent</span>;
+      default:
+        return <span className={`${baseStyle}`} style={{ backgroundColor: "#ffc107", color: "#212529" }}>{status}</span>;
+    }
   };
 
   return (
     <div style={{ minHeight: "100vh" }}>
       <Navbar />
 
-    {/* แบนเนอร์ */}
-{localStorage.getItem("role") === "USER" && (
-  <div
-    className="py-5 text-center text-white mb-4 mx-3 d-flex flex-column align-items-center justify-content-center"
-    style={{
-      backgroundImage: "url('/banner2.png')", 
-      backgroundSize: "cover",       
-      backgroundPosition: "center", 
-      borderRadius: "1rem",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-      minHeight: "180px",
-      marginTop: "40px"
-    }}
-  >
-    <h1 className="fw-bold">Welcome to Your Attendance Dashboard</h1>
-    <p className="lead">Check your attendance and manage your work time </p>
-    <h2>{formatCurrentTime(currentTime)}</h2>
+      {/* แบนเนอร์ */}
+      {localStorage.getItem("role") === "USER" && (
+        <div
+          className="py-5 text-center text-white mb-4 mx-3 d-flex flex-column align-items-center justify-content-center"
+          style={{
+            backgroundImage: "url('/banner2.png')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            borderRadius: "1rem",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            minHeight: "180px",
+            marginTop: "40px",
+          }}
+        >
+          <h1 className="fw-bold">Welcome to Your Attendance Dashboard</h1>
+          <p className="lead">Check your attendance and manage your work time</p>
+          <h2>{formatCurrentTime(currentTime)}</h2>
 
-    {/* Clock In / Clock Out Buttons */}
-    <div className="d-flex gap-3 mt-3">
-      <button
-        className="btn rounded-pill px-4 py-2 fw-semibold"
-        style={{ backgroundColor: "#9b6bff", color: "white", border: "none" }}
-        onClick={clockIn}
-        disabled={loading}
-      >
-        Clock In
-      </button>
-      <button
-        className="btn rounded-pill px-4 py-2 fw-semibold"
-        style={{    backgroundColor: "white",  
-                  color: "#6a11cb",  }}
-        onClick={clockOut}
-        disabled={loading}
-      >
-        Clock Out
-      </button>
-    </div>
-  </div>
-)}
-
-
+          {/* Clock In / Clock Out Buttons */}
+          <div className="d-flex gap-3 mt-3">
+            <button
+              className="btn rounded-pill px-4 py-2 fw-semibold"
+              style={{ backgroundColor: "#9b6bff", color: "white", border: "none" }}
+              onClick={clockIn}
+              disabled={loading}
+            >
+              Clock In
+            </button>
+            <button
+              className="btn rounded-pill px-4 py-2 fw-semibold"
+              style={{ backgroundColor: "white", color: "#6a11cb" }}
+              onClick={clockOut}
+              disabled={loading || !hasClockedIn}
+            >
+              Clock Out
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="container py-4">
         {/* ตารางข้อมูล */}
@@ -126,8 +132,6 @@ export default function UserDashboard() {
             }}
           >
             <span>Attendance History</span>
-
-          
           </div>
 
           <div className="card-body p-0">
@@ -145,11 +149,11 @@ export default function UserDashboard() {
               <tbody>
                 {attendance.length > 0 ? (
                   attendance.map((a) => (
-                    <tr key={a.id}>
+                    <tr key={a.id} style={{ backgroundColor: a.status.toLowerCase() === "late" ? "#ffe5e5" : "#e9f7ef" }}>
                       <td>{a.date}</td>
                       <td>{formatDateTime(a.clockIn)}</td>
                       <td>{formatDateTime(a.clockOut)}</td>
-                      <td>{a.status}</td>
+                      <td>{getStatusBadge(a.status)}</td>
                       <td>{a.method}</td>
                       <td>{a.location}</td>
                     </tr>
