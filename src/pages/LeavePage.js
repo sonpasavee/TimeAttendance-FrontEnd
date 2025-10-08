@@ -9,7 +9,7 @@ export default function Leave() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [alert, setAlert] = useState(null);
-  const [showForm, setShowForm] = useState(false); // ควบคุมฟอร์ม/ตาราง
+  const [showForm, setShowForm] = useState(false); 
 
   const fetchLeaves = async () => {
     try {
@@ -67,7 +67,7 @@ export default function Leave() {
       <div className="container animate-in mt-4 mb-5 p-4 bg-white rounded-4 shadow-lg">
         {/* หัวข้อ */}
         <h2
-          className="page-title fw-bold mb-3" // ✅ เพิ่มจาก mb-2 เป็น mb-3
+          className="page-title fw-bold mb-3" 
           style={{
             background: "linear-gradient(45deg, #667eea, #764ba2)",
             WebkitBackgroundClip: "text",
@@ -97,8 +97,6 @@ export default function Leave() {
           </div>
         )}
 
-
-        {/* แจ้งเตือน */}
         {alert && (
           <div
             className={`alert alert-${alert.type} alert-dismissible fade show`}
@@ -116,7 +114,6 @@ export default function Leave() {
           </div>
         )}
 
-        {/* ฟอร์ม */}
         {showForm ? (
           <div
             className="p-4 rounded-4 shadow-sm"
@@ -162,7 +159,6 @@ export default function Leave() {
               </div>
             </div>
 
-            {/* ปุ่ม Cancel / Submit อยู่ข้าง ๆ กัน */}
             <div className="d-flex justify-content-end gap-2 mt-3">
               <button
                 className="btn btn-secondary px-4"
@@ -174,7 +170,7 @@ export default function Leave() {
               <button
                 className="btn px-4"
                 style={{
-                  background: "linear-gradient(135deg, #a855f7, #f43f5e)", // ม่วง → แดง
+                  background: "linear-gradient(135deg, #a855f7, #f43f5e)",
                   color: "#fff",
                   fontWeight: "600",
                   border: "none",
@@ -187,7 +183,7 @@ export default function Leave() {
             </div>
           </div>
         ) : (
-          /* ตารางแสดงประวัติการลา */
+
           <div className="history-section bg-white rounded-4 p-4 shadow-sm">
             <div className="table-responsive">
               <table className="table table-hover rounded-3 shadow-sm">
@@ -216,16 +212,15 @@ export default function Leave() {
                         <td>{formatDate(l.endDate)}</td>
                         <td>{l.reason}</td>
                         <td>
-                          <span
-                            className={`status-badge ${l.status === "Approved"
-                              ? "status-approved"
-                              : l.status === "Rejected"
-                                ? "status-rejected"
-                                : "status-pending"
-                              }`}
-                          >
-                            {l.status}
-                          </span>
+                          {l.status.toLowerCase() === "approved" && (
+                            <span className="badge bg-success">{l.status}</span>
+                          )}
+                          {l.status.toLowerCase() === "rejected" && (
+                            <span className="badge bg-danger">{l.status}</span>
+                          )}
+                          {l.status.toLowerCase() === "pending" && (
+                            <span className="badge bg-warning text-dark">{l.status}</span>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -236,32 +231,6 @@ export default function Leave() {
           </div>
         )}
       </div>
-
-      <style>{`
-        .status-badge {
-          padding: 8px 16px;
-          border-radius: 20px;
-          font-weight: 600;
-          font-size: 0.85rem;
-        }
-        .status-pending {
-          background: #fff3cd;
-          color: #856404;
-        }
-        .status-approved {
-          background: #d1edff;
-          color: #0c5460;
-        }
-        .status-rejected {
-          background: #f8d7da;
-          color: #721c24;
-        }
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-in { animation: slideIn 0.6s ease-out; }
-      `}</style>
     </div>
   );
 }
