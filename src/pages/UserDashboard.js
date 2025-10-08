@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";   
+import React, { useState, useEffect } from "react";    
 import API from "../api/api";
 import Navbar from "../components/Navbar";
 
@@ -10,11 +10,10 @@ export default function UserDashboard() {
   const [hasClockedOut, setHasClockedOut] = useState(false);
   const [alert, setAlert] = useState(null);
 
-  // แปลง UTC → Bangkok Time (เฉพาะข้อมูล API)
   const toBangkokTime = (utcDateStr) => {
     if (!utcDateStr) return null;
     const d = new Date(utcDateStr);
-    d.setHours(d.getHours() + 7); // +7 ชั่วโมง
+    d.setHours(d.getHours() + 7); 
     return d;
   };
 
@@ -31,7 +30,6 @@ export default function UserDashboard() {
   };
 
   const formatCurrentTime = (dt) => {
-    // ใช้เวลาเครื่องผู้ใช้ตรง ๆ สำหรับ banner
     return new Date(dt).toLocaleTimeString("th-TH", { hour12: false });
   };
 
@@ -40,7 +38,6 @@ export default function UserDashboard() {
       const res = await API.get("/attendance/my");
       setAttendance(res.data);
 
-      // เช็คว่ามีการ clock in / clock out วันนี้หรือยัง
       const todayStr = new Date().toISOString().split("T")[0];
       const todayRecord = res.data.find((a) => a.date === todayStr);
       setHasClockedIn(!!todayRecord?.clockIn);
@@ -109,16 +106,18 @@ export default function UserDashboard() {
   }, [alert]);
 
   const getStatusBadge = (status) => {
+    const s = (status || "").replace("_", " ").toLowerCase();
     const baseStyle = "px-2 py-1 rounded-pill fw-semibold";
-    switch (status?.toLowerCase()) {
+
+    switch (s) {
       case "on time":
-        return <span className={`${baseStyle}`} style={{ backgroundColor: "#28a745", color: "white" }}>On Time</span>;
+        return <span className={baseStyle} style={{ backgroundColor: "#28a745", color: "white" }}>On Time</span>;
       case "late":
-        return <span className={`${baseStyle}`} style={{ backgroundColor: "#dc3545", color: "white" }}>Late</span>;
+        return <span className={baseStyle} style={{ backgroundColor: "#dc3545", color: "white" }}>Late</span>;
       case "absent":
-        return <span className={`${baseStyle}`} style={{ backgroundColor: "#6c757d", color: "white" }}>Absent</span>;
+        return <span className={baseStyle} style={{ backgroundColor: "#6c757d", color: "white" }}>Absent</span>;
       default:
-        return <span className={`${baseStyle}`} style={{ backgroundColor: "#ffc107", color: "#212529" }}>{status}</span>;
+        return <span className={baseStyle} style={{ backgroundColor: "#ffc107", color: "#212529" }}>{status}</span>;
     }
   };
 
@@ -167,15 +166,15 @@ export default function UserDashboard() {
       )}
 
       <div className="container py-4">
-        <div className="card shadow-sm border-0" style={{ borderRadius: "1rem" }}>
-          <div className="card-header d-flex justify-content-between align-items-center text-white fw-semibold"
-            style={{ background: "linear-gradient(to right, #a593e6, #ffb6c1)", borderTopLeftRadius: "1rem", borderTopRightRadius: "1rem" }}>
+        <div className="card shadow-lg border-0" style={{ borderRadius: "1rem", overflow: "hidden" }}>
+          <div className="card-header text-white fw-bold"
+               style={{ background: "linear-gradient(to right, #a593e6, #ffb6c1)" }}>
             <span>Attendance History</span>
           </div>
 
           <div className="card-body p-0">
             <table className="table table-hover mb-0 text-center align-middle">
-              <thead className="table-light">
+              <thead style={{ backgroundColor: "#f8f9fa" }}>
                 <tr>
                   <th>Date</th>
                   <th>Clock In</th>
