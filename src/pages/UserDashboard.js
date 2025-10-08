@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react"; 
 import API from "../api/api";
 import Navbar from "../components/Navbar";
 
@@ -7,6 +7,7 @@ export default function UserDashboard() {
   const [loading, setLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [hasClockedIn, setHasClockedIn] = useState(false);
+  const [alert, setAlert] = useState(null);
 
   const fetchAttendance = async () => {
     const res = await API.get("/attendance/my");
@@ -19,7 +20,7 @@ export default function UserDashboard() {
 
   const clockIn = async () => {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser");
+      setAlert({ type: "danger", message: "Geolocation is not supported by your browser ❌" });
       return;
     }
 
@@ -30,9 +31,10 @@ export default function UserDashboard() {
         setLoading(true);
         await API.post("/attendance/clockin", { method, location });
         fetchAttendance();
+        setAlert({ type: "success", message: "Clock In สำเร็จ ✅" });
       } catch (err) {
         console.error(err);
-        alert("Failed to clock in");
+        setAlert({ type: "danger", message: "Clock In ล้มเหลว ❌" });
       } finally {
         setLoading(false);
       }
@@ -44,9 +46,10 @@ export default function UserDashboard() {
       setLoading(true);
       await API.post("/attendance/clockout");
       fetchAttendance();
+      setAlert({ type: "success", message: "Clock Out สำเร็จ ✅" });
     } catch (err) {
       console.error(err);
-      alert("Failed to clock out");
+      setAlert({ type: "danger", message: "Clock Out ล้มเหลว ❌" });
     } finally {
       setLoading(false);
     }
@@ -57,6 +60,14 @@ export default function UserDashboard() {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // ให้ alert หายเองหลัง 2 วินาที
+  useEffect(() => {
+    if (alert) {
+      const timer = setTimeout(() => setAlert(null), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [alert]);
 
   const formatDateTime = (dt) => (!dt ? "-" : new Date(dt).toLocaleString());
   const formatCurrentTime = (dt) => dt.toLocaleTimeString();
@@ -117,6 +128,14 @@ export default function UserDashboard() {
               Clock Out
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Alert */}
+      {alert && (
+        <div className={`alert alert-${alert.type} alert-dismissible fade show mx-3`} role="alert" style={{ position: "fixed", top: 20, right: 20, zIndex: 1050 }}>
+          <i className={`fas fa-${alert.type === "success" ? "check-circle" : "exclamation-triangle"} me-2`}></i>
+          {alert.message}
         </div>
       )}
 

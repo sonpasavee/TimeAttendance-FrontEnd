@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react"; 
 import API from "../api/api";
 import Navbar from "../components/Navbar";
 import { FaUserAlt, FaRegClock, FaUserCheck, FaCalendarCheck, FaBan } from "react-icons/fa";
@@ -14,6 +14,10 @@ export default function AdminDashboard() {
   const [userPerPage] = useState(5);
   const [attendancePage, setAttendancePage] = useState(1);
   const [attendancePerPage] = useState(5);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [alert, setAlert] = useState(null);
 
   const normalUsers = users.filter((u) => u.role && u.role.toLowerCase() !== "admin");
   const totalNormalUsers = normalUsers.length;
@@ -37,7 +41,7 @@ export default function AdminDashboard() {
       setUsers(res.data);
     } catch (err) {
       console.error(err);
-      alert("Failed to fetch users");
+      showAlert("danger", "Failed to fetch users ❌");
     }
   };
 
@@ -47,7 +51,7 @@ export default function AdminDashboard() {
       setLeaves(res.data);
     } catch (err) {
       console.error(err);
-      alert("Failed to fetch leave requests");
+      showAlert("danger", "Failed to fetch leave requests ❌");
     }
   };
 
@@ -57,7 +61,7 @@ export default function AdminDashboard() {
       setAttendance(res.data);
     } catch (err) {
       console.error(err);
-      alert("Failed to fetch attendance records");
+      showAlert("danger", "Failed to fetch attendance records ❌");
     }
   };
 
@@ -70,7 +74,7 @@ export default function AdminDashboard() {
       fetchLeaves();
     } catch (err) {
       console.error(err);
-      alert("Failed to approve leave");
+      showAlert("danger", "Failed to approve leave ❌");
     }
   };
 
@@ -83,7 +87,7 @@ export default function AdminDashboard() {
       fetchLeaves();
     } catch (err) {
       console.error(err);
-      alert("Failed to reject leave");
+      showAlert("danger", "Failed to reject leave ❌");
     }
   };
 
@@ -100,26 +104,40 @@ export default function AdminDashboard() {
       );
       setEditingUser(null);
       fetchUsers();
-      alert("User updated successfully");
+      showAlert("success", "User updated successfully ✅");
     } catch (err) {
       console.error(err);
-      alert("Failed to update user");
+      showAlert("danger", "Failed to update user ❌");
     }
   };
 
-  const deleteUser = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this user?")) return;
+  const confirmDeleteUser = (user) => {
+    setUserToDelete(user);
+    setShowDeleteModal(true);
+  };
+
+  const deleteUser = async () => {
+    if (!userToDelete) return;
+
     try {
       const token = localStorage.getItem("token");
-      await API.delete(`/admin/users/${id}`, {
+      await API.delete(`/admin/users/${userToDelete.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchUsers();
-      alert("User deleted successfully");
+      showAlert("success", "User deleted successfully ✅");
     } catch (err) {
       console.error(err);
-      alert("Failed to delete user");
+      showAlert("danger", "Failed to delete user ❌");
+    } finally {
+      setShowDeleteModal(false);
+      setUserToDelete(null);
     }
+  };
+
+  const showAlert = (type, message) => {
+    setAlert({ type, message });
+    setTimeout(() => setAlert(null), 3000);
   };
 
   const formatDate = (dateValue) => {
@@ -167,9 +185,25 @@ export default function AdminDashboard() {
       <Navbar />
       <div className="container py-5">
 
+        {/* Alert */}
+        {alert && (
+          <div
+            className={`alert alert-${alert.type} alert-dismissible fade show`}
+            role="alert"
+            style={{ position: "fixed", top: 20, right: 20, zIndex: 1050 }}
+          >
+            {alert.message}
+            <button
+              type="button"
+              className="btn-close"
+              onClick={() => setAlert(null)}
+            ></button>
+          </div>
+        )}
+
         {/* Summary Cards */}
         <div className="d-flex justify-content-center mb-5 flex-wrap gap-4">
-          {[
+          {[ 
             { title: "Total Users", value: totalNormalUsers, icon: <FaUserAlt /> },
             { title: "Clock In", value: summary.totalClockIn, icon: <FaRegClock /> },
             { title: "Clock Out", value: summary.totalClockOut, icon: <FaUserCheck /> },
@@ -280,7 +314,7 @@ export default function AdminDashboard() {
                           ) : (
                             <button className="btn btn-sm btn-light me-2" onClick={() => startEdit(u)}>Edit</button>
                           )}
-                          <button className="btn btn-sm btn-danger" onClick={() => deleteUser(u.id)}>Delete</button>
+                          <button className="btn btn-sm btn-danger" onClick={() => confirmDeleteUser(u)}>Delete</button>
                         </div>
                       </td>
                     </tr>
@@ -311,6 +345,27 @@ export default function AdminDashboard() {
             </nav>
           </div>
         </div>
+
+                {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="modal show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+            <div className="modal-dialog modal-dialog-centered" role="document">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">Confirm Delete</h5>
+                  <button type="button" className="btn-close" onClick={() => setShowDeleteModal(false)}></button>
+                </div>
+                <div className="modal-body">
+                  <p>Are you sure you want to delete <strong>{userToDelete?.username}</strong>?</p>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancel</button>
+                  <button type="button" className="btn btn-danger" onClick={deleteUser}>Delete</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Attendance Table */}
         <div className="card mb-5 shadow-lg" style={{ borderRadius: "1rem" }}>
