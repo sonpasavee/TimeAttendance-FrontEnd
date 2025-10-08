@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from "react";
 import API from "../api/api";
 import Navbar from "../components/Navbar";
-import { FaUserAlt, FaRegClock, FaUserCheck, FaCalendarCheck, FaBan } from "react-icons/fa";
+import {
+  FaUserAlt,
+  FaRegClock,
+  FaUserCheck,
+  FaCalendarCheck,
+  FaBan,
+} from "react-icons/fa";
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
@@ -10,17 +16,18 @@ export default function AdminDashboard() {
   const [editingUser, setEditingUser] = useState(null);
   const [userFilter, setUserFilter] = useState("ALL");
 
-
-  const normalUsers = users.filter((u) => u.role && u.role.toLowerCase() !== "admin");
+  const normalUsers = users.filter(
+    (u) => u.role && u.role.toLowerCase() !== "admin"
+  );
   const totalNormalUsers = normalUsers.length;
 
   const summary = {
     totalClockIn: attendance.filter((a) => a.clockIn).length,
     totalClockOut: attendance.filter((a) => a.clockOut).length,
-    totalLeave: attendance.filter((a) => a.status === "Leave").length,
+    totalLeave: leaves.filter((l) => l.status === "APPROVED").length, // นับเฉพาะอนุมัติ
   };
 
-  const rejectedCount = leaves.filter((l) => l.status === "Rejected").length;
+  const rejectedCount = leaves.filter((l) => l.status === "REJECTED").length;
 
   useEffect(() => {
     fetchUsers();
@@ -83,7 +90,9 @@ export default function AdminDashboard() {
   const saveEdit = async () => {
     if (!editingUser || !editingUser.username.trim()) return;
     try {
-      await API.put(`/admin/users/${editingUser.id}`, { username: editingUser.username });
+      await API.put(`/admin/users/${editingUser.id}`, {
+        username: editingUser.username,
+      });
       setEditingUser(null);
       fetchUsers();
       alert("User updated successfully");
@@ -117,7 +126,9 @@ export default function AdminDashboard() {
     return isNaN(d.getTime()) ? "-" : d.toLocaleString();
   };
 
-  const filteredUsers = users.filter((u) => (userFilter === "ALL" ? true : u.role === userFilter));
+  const filteredUsers = users.filter((u) =>
+    userFilter === "ALL" ? true : u.role === userFilter
+  );
 
   return (
     <div>
@@ -126,16 +137,36 @@ export default function AdminDashboard() {
         {/* Summary Cards */}
         <div className="d-flex justify-content-center mb-5 flex-wrap gap-4">
           {[
-            { title: "Total Users", value: totalNormalUsers, icon: <FaUserAlt /> },
-            { title: "Clock In", value: summary.totalClockIn, icon: <FaRegClock /> },
-            { title: "Clock Out", value: summary.totalClockOut, icon: <FaUserCheck /> },
-            { title: "Leave", value: summary.totalLeave, icon: <FaCalendarCheck /> },
+            {
+              title: "Total Users",
+              value: totalNormalUsers,
+              icon: <FaUserAlt />,
+            },
+            {
+              title: "Clock In",
+              value: summary.totalClockIn,
+              icon: <FaRegClock />,
+            },
+            {
+              title: "Clock Out",
+              value: summary.totalClockOut,
+              icon: <FaUserCheck />,
+            },
+            {
+              title: "Leave",
+              value: summary.totalLeave,
+              icon: <FaCalendarCheck />,
+            },
             { title: "Rejected Leave", value: rejectedCount, icon: <FaBan /> },
           ].map((card, i) => (
             <div
               key={i}
               className="card text-center shadow border-0 text-white"
-              style={{ background: "linear-gradient(to bottom, #9b6bff, #a593e6)", width: "200px", borderRadius: "1rem" }}
+              style={{
+                background: "linear-gradient(to bottom, #9b6bff, #a593e6)",
+                width: "200px",
+                borderRadius: "1rem",
+              }}
             >
               <div className="card-body">
                 <div className="fs-2 mb-2">{card.icon}</div>
@@ -148,7 +179,10 @@ export default function AdminDashboard() {
 
         {/* Pending Leave Requests */}
         <div className="card shadow-lg mb-5 border-0">
-          <div className="card-header text-white fw-bold" style={{ background: "linear-gradient(to right,#a593e6, #ffb6c1)" }}>
+          <div
+            className="card-header text-white fw-bold"
+            style={{ background: "linear-gradient(to right,#a593e6, #ffb6c1)" }}
+          >
             Pending Leave Requests
           </div>
           <div className="card-body p-0">
@@ -173,10 +207,16 @@ export default function AdminDashboard() {
                       <td>{formatDate(l.endDate)}</td>
                       <td>{formatDateTime(l.createdAt)}</td>
                       <td>
-                        <button className="btn btn-success btn-sm me-2" onClick={() => approve(l.id)}>
+                        <button
+                          className="btn btn-success btn-sm me-2"
+                          onClick={() => approve(l.id)}
+                        >
                           Approve
                         </button>
-                        <button className="btn btn-danger btn-sm" onClick={() => reject(l.id)}>
+                        <button
+                          className="btn btn-danger btn-sm"
+                          onClick={() => reject(l.id)}
+                        >
                           Reject
                         </button>
                       </td>
@@ -197,7 +237,11 @@ export default function AdminDashboard() {
         {/* Filter by Role */}
         <div className="mb-3 d-flex align-items-center gap-2">
           <span>Filter by role:</span>
-          <select className="form-select w-auto" value={userFilter} onChange={(e) => setUserFilter(e.target.value)}>
+          <select
+            className="form-select w-auto"
+            value={userFilter}
+            onChange={(e) => setUserFilter(e.target.value)}
+          >
             <option value="ALL">All</option>
             <option value="USER">User</option>
             <option value="ADMIN">Admin</option>
@@ -206,7 +250,10 @@ export default function AdminDashboard() {
 
         {/* All Users */}
         <div className="card mb-5 shadow-lg">
-          <div className="card-header text-white" style={{ background: "linear-gradient(to right,#a593e6, #ffb6c1)" }}>
+          <div
+            className="card-header text-white"
+            style={{ background: "linear-gradient(to right,#a593e6, #ffb6c1)" }}
+          >
             All Users
           </div>
           <div className="card-body p-0">
@@ -214,33 +261,60 @@ export default function AdminDashboard() {
               <tbody>
                 {filteredUsers.length > 0 ? (
                   filteredUsers.map((u) => (
-                    <tr key={u.id} style={{ backgroundColor: u.role === "USER" ? "#e0f7fa" : "#d4edda" }}>
+                    <tr
+                      key={u.id}
+                      style={{
+                        backgroundColor:
+                          u.role === "USER" ? "#e0f7fa" : "#d4edda",
+                      }}
+                    >
                       <td className="d-flex align-items-center justify-content-between">
                         <div style={{ flex: 1, textAlign: "left" }}>
                           {editingUser?.id === u.id ? (
                             <input
                               className="form-control"
                               value={editingUser.username}
-                              onChange={(e) => setEditingUser({ ...editingUser, username: e.target.value })}
+                              onChange={(e) =>
+                                setEditingUser({
+                                  ...editingUser,
+                                  username: e.target.value,
+                                })
+                              }
                             />
                           ) : (
                             u.username
                           )}
                         </div>
-                        <div style={{ flex: 1, textAlign: "center", color: u.role === "ADMIN" ? "#00bcd4" : "#28a745" }}>
+                        <div
+                          style={{
+                            flex: 1,
+                            textAlign: "center",
+                            color: u.role === "ADMIN" ? "#00bcd4" : "#28a745",
+                          }}
+                        >
                           {u.role}
                         </div>
                         <div style={{ flex: 1, textAlign: "right" }}>
                           {editingUser?.id === u.id ? (
-                            <button className="btn btn-sm btn-success me-2" onClick={saveEdit} disabled={!editingUser.username.trim()}>
+                            <button
+                              className="btn btn-sm btn-success me-2"
+                              onClick={saveEdit}
+                              disabled={!editingUser.username.trim()}
+                            >
                               Save
                             </button>
                           ) : (
-                            <button className="btn btn-sm btn-light me-2" onClick={() => startEdit(u)}>
+                            <button
+                              className="btn btn-sm btn-light me-2"
+                              onClick={() => startEdit(u)}
+                            >
                               Edit
                             </button>
                           )}
-                          <button className="btn btn-sm btn-danger" onClick={() => deleteUser(u.id)}>
+                          <button
+                            className="btn btn-sm btn-danger"
+                            onClick={() => deleteUser(u.id)}
+                          >
                             Delete
                           </button>
                         </div>
@@ -286,7 +360,14 @@ export default function AdminDashboard() {
                       <td>{formatDate(a.date)}</td>
                       <td>{formatDateTime(a.clockIn)}</td>
                       <td>{formatDateTime(a.clockOut)}</td>
-                      <td style={{ color: a.status.toLowerCase() === "late" ? "red" : "inherit" }}>
+                      <td
+                        style={{
+                          color:
+                            a.status.toLowerCase() === "late"
+                              ? "red"
+                              : "inherit",
+                        }}
+                      >
                         {a.status}
                       </td>
                       <td>{a.method}</td>
@@ -304,7 +385,6 @@ export default function AdminDashboard() {
             </table>
           </div>
         </div>
-
       </div>
     </div>
   );
