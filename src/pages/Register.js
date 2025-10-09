@@ -96,14 +96,6 @@ return (
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            <select
-              className="form-select form-select-lg mb-4"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-            >
-              <option value="USER">User</option>
-              <option value="ADMIN">Admin</option>
-            </select>
             <button
               type="submit"
               className="btn btn-lg w-100 mb-3 text-white"
